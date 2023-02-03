@@ -1,5 +1,7 @@
 # Object Detection in an Urban Environment
 
+## [Project Writeup](project-writeup.md)
+
 ## Data
 
 For this project, we will be using data from the [Waymo Open dataset](https://waymo.com/open/).

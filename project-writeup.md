@@ -13,7 +13,7 @@ Object detection techniques are indispensable parts for autonomous driving. Accu
 
 ### Dataset analysis
 
-The first step is to [download and process the dataset](README.md#download-and-process-the-data) to get necessary information for object detections in camera images. The new tfrecord format contains the image being resized to 640x640 and the bounding box information. The function of randomly displaying 10 images, as shown below, is implemented to check whether the image associated its corresponding bounding boxes and class labels are presented correctly.
+The first step is to [download and process the dataset]to get necessary information for object detections in camera images. The new tfrecord format contains the image being resized to 640x640 and the bounding box information. The function of randomly displaying 10 images, as shown below, is implemented to check whether the image associated its corresponding bounding boxes and class labels are presented correctly.
 
 <img src="docs/random_10_images.png" width="800">
 <hr>

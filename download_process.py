@@ -9,7 +9,8 @@ from PIL import Image
 from psutil import cpu_count
 from waymo_open_dataset import dataset_pb2 as open_dataset
 
-from utils import get_module_logger, parse_frame, int64_feature, int64_list_feature, \
+from utils import get_module_logger, parse_frame, int64_feature, \
+    int64_list_feature, \
     bytes_list_feature, bytes_feature, float_list_feature
 
 
@@ -23,18 +24,20 @@ def create_tf_example(filename, encoded_jpeg, annotations, resize=True):
         - annotations [protobuf object]: bboxes and classes
 
     returns:
-        - tf_example [tf.Train.Example]: tf example in the objection detection api format.
+        - tf_example [tf.Train.Example]:
+        tf example in the objection detection api format.
     """
     if not resize:
         encoded_jpg_io = io.BytesIO(encoded_jpeg)
         image = Image.open(encoded_jpg_io)
         width, height = image.size
         width_factor, height_factor = image.size
-        
+
     else:
         image_tensor = tf.io.decode_jpeg(encoded_jpeg)
         height_factor, width_factor, _ = image_tensor.shape
-        image_res = tf.cast(tf.image.resize(image_tensor, (640, 640)), tf.uint8)
+        image_res = tf.cast(tf.image.resize(image_tensor, (640, 640)),
+                            tf.uint8)
         encoded_jpeg = tf.io.encode_jpeg(image_res).numpy()
         width, height = 640, 640
 
@@ -49,8 +52,12 @@ def create_tf_example(filename, encoded_jpeg, annotations, resize=True):
     filename = filename.encode('utf8')
 
     for ann in annotations:
-        xmin, ymin = ann.box.center_x - 0.5 * ann.box.length, ann.box.center_y - 0.5 * ann.box.width
-        xmax, ymax = ann.box.center_x + 0.5 * ann.box.length, ann.box.center_y + 0.5 * ann.box.width
+        length = ann.box.center_x - 0.5 * ann.box.length
+        box_width = ann.box.center_y - 0.5 * ann.box.width
+        xmin, ymin = length, box_width
+        box_length_max = ann.box.center_x + 0.5 * ann.box.length
+        ann_box_width_max = ann.box.center_y + 0.5 * ann.box.width
+        xmax, ymax = box_length_max, ann_box_width_max
         xmins.append(xmin / width_factor)
         xmaxs.append(xmax / width_factor)
         ymins.append(ymin / height_factor)
@@ -140,7 +147,8 @@ def download_and_process(filename, data_dir):
 
 if __name__ == "__main__":
     logger = get_module_logger(__name__)
-    parser = argparse.ArgumentParser(description='Download and process tf files')
+    parser = argparse.ArgumentParser(
+        description='Download and process tf files')
     parser.add_argument('--data_dir', required=True,
                         help='data directory')
     parser.add_argument('--size', required=False, default=100, type=int,
@@ -148,13 +156,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     data_dir = args.data_dir
     size = args.size
-    
+
     # open the filenames file
     with open('filenames.txt', 'r') as f:
         filenames = f.read().splitlines()
-    logger.info(f'Download {len(filenames[:size])} files. Be patient, this will take a long time.')
-    
+    logger.info(
+        f'Download {len(filenames[:size])} files. '
+        f'Be patient, this will take a long time.')
+
     # init ray
     ray.init(num_cpus=cpu_count())
-    workers = [download_and_process.remote(fn, data_dir) for fn in filenames[:size]]
+    workers = [download_and_process.remote(fn, data_dir) for fn in
+               filenames[:size]]
     _ = ray.get(workers)
